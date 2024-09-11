@@ -3,8 +3,12 @@
 const PERSONAL_CALENDAR_ID = "YOU@PERSONAL_DOMAIN.COM";
 const WORK_CALENDAR_ID = "YOU@WORK_DOMAIN.COM";
 
-
-const myEmail = PERSONAL_CALENDAR_ID;
+/** If you use other email accounts to create events that aren't 
+ * PERSONAL_CALENDAR_ID or WORK_CALENDAR_ID, add them here */
+const myEmails = [
+  PERSONAL_CALENDAR_ID, 
+  WORK_CALENDAR_ID,
+];
 
 // Prefix to mark events created by the script
 const SCRIPT_PREFIX = "Created by Script: ";
@@ -67,15 +71,15 @@ function onPersonalCalendarUpdate() {
 function hasAccepted(event) {
   const myStatus = event.getMyStatus();
   const creatorEmail = event.getCreators()[0];
+  if (myEmails.indexOf(creatorEmail) != -1) {
 
-  if (creatorEmail === myEmail || creatorEmail === WORK_CALENDAR_ID) {
     return myStatus === CalendarApp.GuestStatus.YES || 
            myStatus === CalendarApp.GuestStatus.MAYBE || 
            myStatus === null;
   }
 
   const guestList = event.getGuestList(true);
-  const guest = guestList.find(g => g.getEmail() === myEmail);
+  const guest = guestList.find(g => myEmails.indexOf(g.getEmail()) != -1);
 
   if (guest) {
     return guest.getGuestStatus() === CalendarApp.GuestStatus.YES ||
