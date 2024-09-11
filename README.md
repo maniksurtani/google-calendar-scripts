@@ -1,6 +1,6 @@
 # google-calendar-scripts
 
-These scrripts are designed to enhance your experience of Google Calendar.
+These scripts are designed to enhance your experience of Google Calendar.
 
 # Requirements
 
