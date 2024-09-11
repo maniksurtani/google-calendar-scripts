@@ -9,15 +9,18 @@ const myEmail = PERSONAL_CALENDAR_ID;
 // Prefix to mark events created by the script
 const SCRIPT_PREFIX = "Created by Script: ";
 
+// Number of months of future events to sync
+const LOOKAHEAD_PERIOD_MONTHS = 3;
+
 // Runs every time an event is updated in the personal calendar
 function onPersonalCalendarUpdate() {
   const calendar = CalendarApp.getCalendarById(PERSONAL_CALENDAR_ID);
   const now = new Date();
-  const threeMonthsLater = new Date();
-  threeMonthsLater.setMonth(now.getMonth() + 3); // 3 months into the future
+  const period = new Date();
+  period.setMonth(now.getMonth() + LOOKAHEAD_PERIOD_MONTHS);
 
-  // Fetch events from the personal calendar for the next 3 months
-  const personalEvents = calendar.getEvents(now, threeMonthsLater);
+  // Fetch events from the personal calendar for the next LOOKAHEAD_PERIOD_MONTHS months
+  const personalEvents = calendar.getEvents(now, period);
   const workCalendar = CalendarApp.getCalendarById(WORK_CALENDAR_ID);
   const workEventsMap = getWorkEventsMap(workCalendar); // Use a map for faster lookup
 
