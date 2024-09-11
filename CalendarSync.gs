@@ -106,6 +106,7 @@ function createWorkEvent(workCalendar, workEventData) {
   newWorkEvent.setColor(workEventData.color);
   newWorkEvent.setDescription(workEventData.description);
   newWorkEvent.setVisibility(workEventData.visibility);
+  newWorkEvent.removeAllReminders();
 }
 
 // Check if the current work event differs from the new event data
