@@ -16,6 +16,12 @@ const SCRIPT_PREFIX = "Created by Script: ";
 // Number of months of future events to sync
 const LOOKAHEAD_PERIOD_MONTHS = 3;
 
+/**
+  Whether the RSVP status of events created by one of
+  your accounts (myEmails) should be ignored.
+ */
+const IGNORE_STATUS_FOR_OWN_EVENTS = true;
+
 /* Whether all-day events should be ignored. */
 const IGNORE_ALL_DAY_EVENTS = true;
 
@@ -79,6 +85,9 @@ function shouldCreateOrUpdate(event) {
   const myStatus = event.getMyStatus();
   const creatorEmail = event.getCreators()[0];
   if (myEmails.indexOf(creatorEmail) != -1) {
+    if (IGNORE_STATUS_FOR_OWN_EVENTS) {
+      return true;
+    }
 
     return myStatus === CalendarApp.GuestStatus.YES || 
            myStatus === CalendarApp.GuestStatus.MAYBE || 
