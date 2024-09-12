@@ -16,6 +16,9 @@ const SCRIPT_PREFIX = "Created by Script: ";
 // Number of months of future events to sync
 const LOOKAHEAD_PERIOD_MONTHS = 3;
 
+/* Whether all-day events should be ignored. */
+const IGNORE_ALL_DAY_EVENTS = true;
+
 // Runs every time an event is updated in the personal calendar
 function onPersonalCalendarUpdate() {
   const calendar = CalendarApp.getCalendarById(PERSONAL_CALENDAR_ID);
@@ -39,7 +42,7 @@ function onPersonalCalendarUpdate() {
     const eventIdentifier = event.getId() + "_" + event.getStartTime().toISOString();
     processedWorkEventIds.add(eventIdentifier); // Track for later orphan cleanup
 
-    if (hasAccepted(event)) {
+    if (shouldCreateOrUpdate(event)) {
       const existingWorkEvent = workEventsMap.get(eventIdentifier);
       const workEventData = createOrUpdateWorkEventData(event);
 
@@ -67,8 +70,12 @@ function onPersonalCalendarUpdate() {
   processEventDeletions(eventsToDelete);
 }
 
-// Check if the event is relevant (created by you or accepted)
-function hasAccepted(event) {
+// Check if the event is relevant (created by you or accepted, obeys other filters)
+function shouldCreateOrUpdate(event) {
+  if (IGNORE_ALL_DAY_EVENTS && event.isAllDayEvent()) {
+    return false;
+  }
+
   const myStatus = event.getMyStatus();
   const creatorEmail = event.getCreators()[0];
   if (myEmails.indexOf(creatorEmail) != -1) {
