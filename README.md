@@ -28,3 +28,7 @@ This script creates private blocks on your work calendar at teh same time that e
 * Set up a trigger to run `onPersonalCalendarUpdate()` every time a calendar change is detected
 * Run that same function manually for the first time to grant necessary permissions
 
+# Development
+
+This repository uses [Hermit](https://cashapp.github.io/hermit/). Make sure you have Hermit installed, and activated in this directory.
+
