@@ -15,20 +15,19 @@ Browse to Google Scripts: https://script.google.com/
 This script changes the colours of calendar events based on type of event and who is invited, so certain types of events stand out more than others. 
 
 * Create a new project 
-* Copy the contents of `CalendarColourCoding.gs` into the code editor
+* Copy the contents of the `src/CalendarColourCoding` folder into the code editor
 * Set up a trigger to run `analyzeAndColorCodeWorkEvents()` periodically (I run mine every hour)
 * Run that same function manually for the first time to grant necessary permissions   
 
 ## CalendarSync
 
-This script creates private blocks on your work calendar at teh same time that events exist on your personal calendar. 
+This script creates private blocks on your work calendar at the same time that events exist on your personal calendar. 
 
 * Create a new project
-* Copy the contents of `CalendarSync.gs` into the code editor
+* Copy the contents of the `src/CalendarSync` folder into the code editor
 * Set up a trigger to run `onPersonalCalendarUpdate()` every time a calendar change is detected
 * Run that same function manually for the first time to grant necessary permissions
 
 # Development
 
 This repository uses [Hermit](https://cashapp.github.io/hermit/). Make sure you have Hermit installed, and activated in this directory.
-
