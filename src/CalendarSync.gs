@@ -1,29 +1,9 @@
-
-// SET THESE VARIABLES BEFORE YOU START
-const PERSONAL_CALENDAR_ID = "YOU@PERSONAL_DOMAIN.COM";
-const WORK_CALENDAR_ID = "YOU@WORK_DOMAIN.COM";
-
 /** If you use other email accounts to create events that aren't 
  * PERSONAL_CALENDAR_ID or WORK_CALENDAR_ID, add them here */
 const myEmails = [
   PERSONAL_CALENDAR_ID, 
   WORK_CALENDAR_ID,
 ];
-
-// Prefix to mark events created by the script
-const SCRIPT_PREFIX = "Created by Script: ";
-
-// Number of months of future events to sync
-const LOOKAHEAD_PERIOD_MONTHS = 3;
-
-/**
-  Whether the RSVP status of events created by one of
-  your accounts (myEmails) should be ignored.
- */
-const IGNORE_STATUS_FOR_OWN_EVENTS = true;
-
-/* Whether all-day events should be ignored. */
-const IGNORE_ALL_DAY_EVENTS = true;
 
 // Runs every time an event is updated in the personal calendar
 function onPersonalCalendarUpdate() {

@@ -8,26 +8,23 @@ These scripts only work with Google Calendar. Both your personal and work calend
 
 # Installation
 
-Browse to Google Scripts: https://script.google.com/
+## Automatic
+1. Edit the `src/Constants.gs` file to set values specific to your environment
+2. Run `clasp push -f`
+3. Browse to [Google Scripts](https://script.google.com/) and run the `createTriggers()` function
 
-## CalendarColourCoding
+## Manual
+1. Edit the `src/Constants.gs` file to set values specific to your environment
+2. Browse to [Google Scripts](https://script.google.com/) and create a new project in your browser
+4. Copy all of the `src/*.gs` files into your new project 
+5. Run the `createTriggers()` function
 
+### CalendarColourCoding
 This script changes the colours of calendar events based on type of event and who is invited, so certain types of events stand out more than others. 
 
-* Create a new project 
-* Copy the contents of the `src/CalendarColourCoding` folder into the code editor
-* Set up a trigger to run `analyzeAndColorCodeWorkEvents()` periodically (I run mine every hour)
-* Run that same function manually for the first time to grant necessary permissions   
-
-## CalendarSync
-
+### CalendarSync
 This script creates private blocks on your work calendar at the same time that events exist on your personal calendar. 
 
-* Create a new project
-* Copy the contents of the `src/CalendarSync` folder into the code editor
-* Set up a trigger to run `onPersonalCalendarUpdate()` every time a calendar change is detected
-* Run that same function manually for the first time to grant necessary permissions
-
 # Development
-
-This repository uses [Hermit](https://cashapp.github.io/hermit/). Make sure you have Hermit installed, and activated in this directory.
+* This repository uses [Hermit](https://cashapp.github.io/hermit/). Make sure you have Hermit installed, and activated in this directory.
+* This repository also uses [Clasp](https://github.com/google/clasp) to set up and deploy the scripts to your Google Script environment.

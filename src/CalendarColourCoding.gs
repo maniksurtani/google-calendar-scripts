@@ -1,19 +1,3 @@
-
-// SET THESE VARIABLES BEFORE YOU START
-const WORK_CALENDAR_ID = "YOU@DOMAIN.COM"; // Set work calendar ID
-const INTERNAL_DOMAINS = ['@domain1.com', '@domain2.xyz', '@domain3.email'];
-const IMPORTANT_GUESTS = ['vip1@', 'vip2@', 'vip3@', 'vip4@', 'vip5@'];
-
-// Colors for different event types (using Google Calendar's predefined color IDs)
-const EVENT_COLORS = {
-  lightGreen: '2',  // Sage (light green)
-  darkGreen: '10',  // Basil (dark green)
-  red: '4',         // Flamingo (red)
-  grey: '8',        // Graphite (gray)
-  lightPurple: '1', // Lavender (closest to light purple)
-  darkPurple: '3'   // Grape (dark purple)
-};
-
 // Analyze and color-code events in the work calendar
 function analyzeAndColorCodeWorkEvents() {
   const workCalendar = CalendarApp.getCalendarById(WORK_CALENDAR_ID);
