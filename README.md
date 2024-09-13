@@ -9,14 +9,14 @@ These scripts only work with Google Calendar. Both your personal and work calend
 # Installation
 
 ## Automatic
-1. Edit the `src/Constants.gs` file to set values specific to your environment
+1. Edit the `src/Constants.js` file to set values specific to your environment
 2. Run `clasp push -f`
 3. Browse to [Google Scripts](https://script.google.com/) and run the `createTriggers()` function
 
 ## Manual
-1. Edit the `src/Constants.gs` file to set values specific to your environment
+1. Edit the `src/Constants.js` file to set values specific to your environment
 2. Browse to [Google Scripts](https://script.google.com/) and create a new project in your browser
-4. Copy all of the `src/*.gs` files into your new project 
+4. Copy all of the `src/*.js` files into your new project 
 5. Run the `createTriggers()` function
 
 ### CalendarColourCoding
