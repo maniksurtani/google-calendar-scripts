@@ -7,6 +7,8 @@ These scripts are designed to enhance your experience of Google Calendar.
 These scripts only work with Google Calendar. Both your personal and work calendars must be on GSuite/Google Workspace or just regular Google Calendar accounts. No other calendaring systems are supported.
 
 # Installation
+* Make sure you have activated Hermit with `source bin/activate-hermit`
+* Ensure you have logged in to your GSuite environment with `clasp login`
 
 ## Automatic
 1. Edit the `src/Constants.js` file to set values specific to your environment
