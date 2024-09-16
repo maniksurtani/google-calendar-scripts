@@ -1,10 +1,3 @@
-/** If you use other email accounts to create events that aren't 
- * PERSONAL_CALENDAR_ID or WORK_CALENDAR_ID, add them here */
-const myEmails = [
-  PERSONAL_CALENDAR_ID, 
-  WORK_CALENDAR_ID,
-];
-
 // Runs every time an event is updated in the personal calendar
 function onPersonalCalendarUpdate() {
   const calendar = CalendarApp.getCalendarById(PERSONAL_CALENDAR_ID);

@@ -55,3 +55,10 @@ var EVENT_COLORS = {
     lightPurple: '1', // Lavender (closest to light purple)
     darkPurple: '3'   // Grape (dark purple)
 };
+
+/** If you use other email accounts to create events that aren't 
+ * PERSONAL_CALENDAR_ID or WORK_CALENDAR_ID, add them here */
+var myEmails = [
+  PERSONAL_CALENDAR_ID,
+  WORK_CALENDAR_ID,
+];
