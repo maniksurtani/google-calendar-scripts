@@ -1,14 +1,23 @@
-// Runs every time an event is updated in the personal calendar
-function onPersonalCalendarUpdate() {
-  const calendar = CalendarApp.getCalendarById(PERSONAL_CALENDAR_ID);
+// Dependency injection for testing
+let calendarService = CalendarApp;
+
+// For testing - allow injection of different calendar service
+function setCalendarService(service) {
+  calendarService = service;
+}
+
+// Main function wrapped to allow dependency injection
+function onPersonalCalendarUpdate(calendarServiceOverride) {
+  const service = calendarServiceOverride || calendarService;
+  const calendar = service.getCalendarById(PERSONAL_CALENDAR_ID);
   const now = new Date();
   const period = new Date();
   period.setMonth(now.getMonth() + LOOKAHEAD_PERIOD_MONTHS);
 
   // Fetch events from the personal calendar for the next LOOKAHEAD_PERIOD_MONTHS months
   const personalEvents = calendar.getEvents(now, period);
-  const workCalendar = CalendarApp.getCalendarById(WORK_CALENDAR_ID);
-  const workEventsMap = getWorkEventsMap(workCalendar); // Use a map for faster lookup
+  const workCalendar = service.getCalendarById(WORK_CALENDAR_ID);
+  const workEventsMap = getWorkEventsMap(workCalendar);
 
   // Create a set to track event identifiers in work calendar for cleaning up orphans later
   const processedWorkEventIds = new Set();
@@ -18,15 +27,15 @@ function onPersonalCalendarUpdate() {
   const eventsToUpdate = [];
 
   personalEvents.forEach(event => {
-    const eventIdentifier = event.getId() + "_" + event.getStartTime().toISOString();
-    processedWorkEventIds.add(eventIdentifier); // Track for later orphan cleanup
+    const eventIdentifier = getEventIdentifier(event);
+    processedWorkEventIds.add(eventIdentifier);
 
     if (shouldCreateOrUpdate(event)) {
       const existingWorkEvent = workEventsMap.get(eventIdentifier);
       const workEventData = createOrUpdateWorkEventData(event);
 
       if (!existingWorkEvent) {
-        createWorkEvent(workCalendar, workEventData); // Only create if it doesn't exist
+        createWorkEvent(workCalendar, workEventData);
       } else if (isEventDifferent(existingWorkEvent, workEventData)) {
         eventsToUpdate.push({ existingWorkEvent, workEventData });
       }
@@ -47,6 +56,22 @@ function onPersonalCalendarUpdate() {
   // Apply the batched updates and deletes
   processEventUpdates(eventsToUpdate);
   processEventDeletions(eventsToDelete);
+}
+
+// Helper function to get event identifier
+function getEventIdentifier(event) {
+  try {
+    const id = event.getId();
+    const startTime = event.getStartTime();
+    if (!id || !startTime) {
+      Logger.log('Invalid event data - missing id or start time');
+      return null;
+    }
+    return id + "_" + startTime.toISOString();
+  } catch (e) {
+    Logger.log('Error generating event identifier: ' + e);
+    return null;
+  }
 }
 
 // Check if the event is relevant (created by you or accepted, obeys other filters)
@@ -80,7 +105,7 @@ function shouldCreateOrUpdate(event) {
 
 // Create or update the work calendar event for each instance of a recurring event
 function createOrUpdateWorkEventData(personalEvent) {
-  const eventIdentifier = personalEvent.getId() + "_" + personalEvent.getStartTime().toISOString();
+  const eventIdentifier = getEventIdentifier(personalEvent);
 
   return {
     title: SCRIPT_PREFIX + 'Personal event ' + personalEvent.getTitle(),
@@ -107,16 +132,34 @@ function createWorkEvent(workCalendar, workEventData) {
 
 // Check if the current work event differs from the new event data
 function isEventDifferent(workEvent, workEventData) {
+  // Extract the actual identifier from the work event's description
+  const workEventDescription = workEvent.getDescription();
+  const newEventDescription = workEventData.description;
+  
+  // If either description is invalid, consider the events different
+  if (!workEventDescription || !newEventDescription || 
+      !workEventDescription.startsWith(SCRIPT_PREFIX) || 
+      !newEventDescription.startsWith(SCRIPT_PREFIX)) {
+    return true;
+  }
+  
+  const workEventIdentifier = workEventDescription.substring(SCRIPT_PREFIX.length);
+  const newEventIdentifier = newEventDescription.substring(SCRIPT_PREFIX.length);
+  
   return workEvent.getTitle() !== workEventData.title ||
          workEvent.getStartTime().toISOString() !== workEventData.startTime.toISOString() ||
          workEvent.getEndTime().toISOString() !== workEventData.endTime.toISOString() ||
-         workEvent.getDescription() !== workEventData.description;
+         workEventIdentifier !== newEventIdentifier;
 }
 
 // Remove a work event if its corresponding personal event was deleted or declined
 function processEventDeletions(eventsToDelete) {
   eventsToDelete.forEach(workEvent => {
-    workEvent.deleteEvent();
+    try {
+      workEvent.deleteEvent();
+    } catch (e) {
+      Logger.log('Error deleting event: ' + e);
+    }
   });
 }
 
@@ -148,10 +191,46 @@ function getWorkEventsMap(workCalendar) {
   // Create a map of work events keyed by their identifier (event ID + start time)
   const workEventsMap = new Map();
   workEvents.forEach(event => {
-    const eventIdentifier = event.getDescription(); // Assuming description stores the event ID + start time
-    workEventsMap.set(eventIdentifier, event);
+    const description = event.getDescription();
+    // Only process events created by the script
+    if (description && description.startsWith(SCRIPT_PREFIX)) {
+      try {
+        // Extract the actual identifier by removing the prefix
+        const eventIdentifier = description.substring(SCRIPT_PREFIX.length);
+        // Verify this is a valid identifier (should contain an underscore and ISO date)
+        if (eventIdentifier.includes('_') && eventIdentifier.includes('T')) {
+          // Check if we already have this event in the map
+          if (workEventsMap.has(eventIdentifier)) {
+            Logger.log('Duplicate event found with identifier: ' + eventIdentifier);
+            // Keep the most recently created event if there are duplicates
+            const existingEvent = workEventsMap.get(eventIdentifier);
+            if (event.getLastUpdated() > existingEvent.getLastUpdated()) {
+              // Delete the older event
+              try {
+                existingEvent.deleteEvent();
+                workEventsMap.set(eventIdentifier, event);
+              } catch (e) {
+                Logger.log('Error deleting duplicate event: ' + e);
+              }
+            } else {
+              // Delete the newer event
+              try {
+                event.deleteEvent();
+              } catch (e) {
+                Logger.log('Error deleting duplicate event: ' + e);
+              }
+            }
+          } else {
+            workEventsMap.set(eventIdentifier, event);
+          }
+        } else {
+          Logger.log('Invalid event identifier found: ' + eventIdentifier);
+        }
+      } catch (e) {
+        Logger.log('Error processing event description: ' + e);
+      }
+    }
   });
-
+  
   return workEventsMap;
 }
-
