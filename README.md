@@ -30,3 +30,6 @@ This script creates private blocks on your work calendar at the same time that e
 # Development
 * This repository uses [Hermit](https://cashapp.github.io/hermit/). Make sure you have Hermit installed, and activated in this directory.
 * This repository also uses [Clasp](https://github.com/google/clasp) to set up and deploy the scripts to your Google Script environment.
+
+# Testing
+Test by deploying `src/tests*.gs` and to Google Scripts and running `runAllTests()`. This uses mocks, so will not actually make any changes to your calendar.
