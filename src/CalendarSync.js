@@ -47,11 +47,22 @@ function onPersonalCalendarUpdate(calendarServiceOverride) {
   });
 
   // Clean up orphaned work entries (delete only those created by the script)
+  Logger.log('Starting cleanup of orphaned work events. Found ' + workEventsMap.size + ' work events to check.');
+  let orphanedCount = 0;
   workEventsMap.forEach((workEvent, eventIdentifier) => {
-    if (!processedWorkEventIds.has(eventIdentifier) && workEvent.getDescription().startsWith(SCRIPT_PREFIX)) {
-      eventsToDelete.push(workEvent);
+    // eventIdentifier here is the one extracted from the workEvent's description
+    if (!processedWorkEventIds.has(eventIdentifier)) {
+      if (workEvent.getDescription().startsWith(SCRIPT_PREFIX)) {
+        Logger.log('Marking orphaned event for deletion: "' + workEvent.getTitle() + '" (Identifier from description: ' + eventIdentifier + ') because it was not found in processed personal event IDs.');
+        eventsToDelete.push(workEvent);
+        orphanedCount++;
+      } else {
+        // This case should ideally not happen if getWorkEventsMap only includes script-prefixed events
+        Logger.log('Skipping non-script event during orphan cleanup: "' + workEvent.getTitle() + '" (Identifier from description: ' + eventIdentifier + '). Description does not start with SCRIPT_PREFIX.');
+      }
     }
   });
+  Logger.log('Orphan cleanup check complete. Marked ' + orphanedCount + ' events for deletion.');
 
   // Apply the batched updates and deletes
   processEventUpdates(eventsToUpdate);
@@ -67,7 +78,12 @@ function getEventIdentifier(event) {
       Logger.log('Invalid event data - missing id or start time');
       return null;
     }
-    return id + "_" + startTime.toISOString();
+    // Normalize startTime by setting milliseconds to 0
+    const normalizedStartTime = new Date(startTime);
+    normalizedStartTime.setMilliseconds(0);
+    // event.getId() returns the iCalUID, which is the same for all instances of a recurring event.
+    // Appending the normalizedStartTime ensures a unique identifier for each instance.
+    return id + "_" + normalizedStartTime.toISOString();
   } catch (e) {
     Logger.log('Error generating event identifier: ' + e);
     return null;
@@ -132,24 +148,62 @@ function createWorkEvent(workCalendar, workEventData) {
 
 // Check if the current work event differs from the new event data
 function isEventDifferent(workEvent, workEventData) {
-  // Extract the actual identifier from the work event's description
   const workEventDescription = workEvent.getDescription();
-  const newEventDescription = workEventData.description;
-  
-  // If either description is invalid, consider the events different
-  if (!workEventDescription || !newEventDescription || 
-      !workEventDescription.startsWith(SCRIPT_PREFIX) || 
+  const newEventDescription = workEventData.description; // Based on normalized personal event start time
+
+  // If descriptions are invalid or prefixes don't match, consider different
+  // This indicates a malformed/unexpected event or one not managed by this script.
+  if (!workEventDescription || !newEventDescription ||
+      !workEventDescription.startsWith(SCRIPT_PREFIX) ||
       !newEventDescription.startsWith(SCRIPT_PREFIX)) {
+    Logger.log("isEventDifferent: Invalid or non-script event description found. workEventDesc: " + workEventDescription + ", newEventDesc: " + newEventDescription);
+    return true; 
+  }
+
+  const workEventStoredIdentifier = workEventDescription.substring(SCRIPT_PREFIX.length);
+  // newEventNormalizedIdentifier is derived from workEventData.description, which itself is created 
+  // using the normalized eventIdentifier from getEventIdentifier(personalEvent).
+  const newEventNormalizedIdentifier = newEventDescription.substring(SCRIPT_PREFIX.length);
+
+  // If the fundamental identifiers are different, the event needs an update.
+  // This also handles the case where an old work event has an unnormalized ID
+  // and needs to be updated to a normalized ID.
+  if (workEventStoredIdentifier !== newEventNormalizedIdentifier) {
+    Logger.log("isEventDifferent: Identifiers differ. Work event stored ID: " + workEventStoredIdentifier + ", New normalized ID: " + newEventNormalizedIdentifier);
+    return true;
+  }
+
+  // Identifiers are the same (meaning workEventStoredIdentifier is already normalized).
+  // Now check if other substantive properties of the event have changed.
+  
+  // For time comparisons, normalize them to avoid false positives due to milliseconds
+  // if the calendar system handles them differently or if personalEvent times have milliseconds.
+  const workCalEventStartTime = new Date(workEvent.getStartTime());
+  workCalEventStartTime.setMilliseconds(0);
+
+  const personalEventStartTime = new Date(workEventData.startTime); // This is personalEvent.getStartTime()
+  personalEventStartTime.setMilliseconds(0);
+
+  const workCalEventEndTime = new Date(workEvent.getEndTime());
+  workCalEventEndTime.setMilliseconds(0);
+
+  const personalEventEndTime = new Date(workEventData.endTime); // This is personalEvent.getEndTime()
+  personalEventEndTime.setMilliseconds(0);
+
+  if (workEvent.getTitle() !== workEventData.title) {
+    Logger.log("isEventDifferent: Titles differ. Work event title: '" + workEvent.getTitle() + "', New title: '" + workEventData.title + "'");
+    return true;
+  }
+  if (workCalEventStartTime.toISOString() !== personalEventStartTime.toISOString()) {
+    Logger.log("isEventDifferent: Start times differ. Work event start: " + workCalEventStartTime.toISOString() + ", New start: " + personalEventStartTime.toISOString());
+    return true;
+  }
+  if (workCalEventEndTime.toISOString() !== personalEventEndTime.toISOString()) {
+    Logger.log("isEventDifferent: End times differ. Work event end: " + workCalEventEndTime.toISOString() + ", New end: " + personalEventEndTime.toISOString());
     return true;
   }
   
-  const workEventIdentifier = workEventDescription.substring(SCRIPT_PREFIX.length);
-  const newEventIdentifier = newEventDescription.substring(SCRIPT_PREFIX.length);
-  
-  return workEvent.getTitle() !== workEventData.title ||
-         workEvent.getStartTime().toISOString() !== workEventData.startTime.toISOString() ||
-         workEvent.getEndTime().toISOString() !== workEventData.endTime.toISOString() ||
-         workEventIdentifier !== newEventIdentifier;
+  return false; // No differences found
 }
 
 // Remove a work event if its corresponding personal event was deleted or declined
